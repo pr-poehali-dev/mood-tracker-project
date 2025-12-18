@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,67 @@ import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
-const Profile = () => {
-  const [name, setName] = useState('Александр');
-  const [email, setEmail] = useState('example@email.com');
+type ProfileProps = {
+  user: {
+    name: string;
+    email: string;
+    createdAt: string;
+  };
+  onLogout: () => void;
+};
+
+const Profile = ({ user, onLogout }: ProfileProps) => {
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [entries, setEntries] = useState<any[]>([]);
+  const [tests, setTests] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    const savedEntries = localStorage.getItem(`mindcare_entries_${user.email}`);
+    if (savedEntries) {
+      setEntries(JSON.parse(savedEntries));
+    }
+
+    const savedTests = localStorage.getItem(`mindcare_tests_${user.email}`);
+    if (savedTests) {
+      setTests(JSON.parse(savedTests));
+    }
+
+    const savedFavorites = localStorage.getItem('favoriteTechniques');
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites));
+    }
+  }, [user.email]);
+
+  const calculateStreak = () => {
+    if (entries.length === 0) return 0;
+    
+    const sortedEntries = [...entries].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < sortedEntries.length; i++) {
+      const entryDate = new Date(sortedEntries[i].date);
+      entryDate.setHours(0, 0, 0, 0);
+      
+      const expectedDate = new Date(today);
+      expectedDate.setDate(today.getDate() - i);
+      expectedDate.setHours(0, 0, 0, 0);
+      
+      if (entryDate.getTime() === expectedDate.getTime()) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
   const [notifications, setNotifications] = useState({
     daily: true,
     weekly: true,
@@ -17,6 +75,8 @@ const Profile = () => {
   });
 
   const handleSaveProfile = () => {
+    const updatedUser = { ...user, name, email };
+    localStorage.setItem('mindcare_user', JSON.stringify(updatedUser));
     toast.success('Профиль успешно обновлён');
   };
 
@@ -174,22 +234,22 @@ const Profile = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-primary/10 text-center">
               <Icon name="BookOpen" size={24} className="text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-primary mb-1">142</div>
+              <div className="text-2xl font-bold text-primary mb-1">{entries.length}</div>
               <div className="text-sm text-muted-foreground">Записей в дневнике</div>
             </div>
             <div className="p-4 rounded-xl bg-secondary/20 text-center">
               <Icon name="ClipboardCheck" size={24} className="text-secondary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-secondary mb-1">8</div>
+              <div className="text-2xl font-bold text-secondary mb-1">{tests.length}</div>
               <div className="text-sm text-muted-foreground">Тестов пройдено</div>
             </div>
             <div className="p-4 rounded-xl bg-green-100 text-center">
               <Icon name="Heart" size={24} className="text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-green-600 mb-1">23</div>
+              <div className="text-2xl font-bold text-green-600 mb-1">{calculateStreak()}</div>
               <div className="text-sm text-muted-foreground">Дней подряд</div>
             </div>
             <div className="p-4 rounded-xl bg-purple-100 text-center">
               <Icon name="Star" size={24} className="text-purple-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-purple-600 mb-1">5</div>
+              <div className="text-2xl font-bold text-purple-600 mb-1">{favorites.length}</div>
               <div className="text-sm text-muted-foreground">Избранных техник</div>
             </div>
           </div>
@@ -208,7 +268,7 @@ const Profile = () => {
             <Icon name="Download" size={20} className="mr-2" />
             Экспортировать все данные
           </Button>
-          <Button variant="destructive" className="w-full justify-start">
+          <Button variant="destructive" className="w-full justify-start" onClick={onLogout}>
             <Icon name="Trash2" size={20} className="mr-2" />
             Удалить аккаунт
           </Button>

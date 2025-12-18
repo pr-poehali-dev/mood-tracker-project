@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
+import { toast } from 'sonner';
 
 type Test = {
   id: string;
@@ -251,11 +252,33 @@ const tests: Test[] = [
   },
 ];
 
-const Tests = () => {
+type TestsProps = {
+  userEmail: string;
+};
+
+type TestResult = {
+  testId: string;
+  testTitle: string;
+  date: string;
+  score: number;
+  level: string;
+  description: string;
+  recommendations: string[];
+};
+
+const Tests = ({ userEmail }: TestsProps) => {
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<any>(null);
+  const [testHistory, setTestHistory] = useState<TestResult[]>([]);
+
+  useEffect(() => {
+    const savedTests = localStorage.getItem(`mindcare_tests_${userEmail}`);
+    if (savedTests) {
+      setTestHistory(JSON.parse(savedTests));
+    }
+  }, [userEmail]);
 
   const handleStartTest = (test: Test) => {
     setSelectedTest(test);
@@ -272,7 +295,23 @@ const Tests = () => {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       const totalScore = newAnswers.reduce((sum, val) => sum + val, 0);
-      setResult(selectedTest!.interpretation(totalScore));
+      const testResult = selectedTest!.interpretation(totalScore);
+      setResult(testResult);
+
+      const newTestResult: TestResult = {
+        testId: selectedTest!.id,
+        testTitle: selectedTest!.title,
+        date: new Date().toISOString(),
+        score: totalScore,
+        level: testResult.level,
+        description: testResult.description,
+        recommendations: testResult.recommendations,
+      };
+
+      const updatedHistory = [newTestResult, ...testHistory];
+      setTestHistory(updatedHistory);
+      localStorage.setItem(`mindcare_tests_${userEmail}`, JSON.stringify(updatedHistory));
+      toast.success('Результаты теста сохранены в ваш профиль');
     }
   };
 

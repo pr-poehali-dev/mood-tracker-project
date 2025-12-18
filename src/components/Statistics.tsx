@@ -1,28 +1,136 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
-const Statistics = () => {
-  const weekData = [
-    { day: 'Пн', mood: 7, stress: 4 },
-    { day: 'Вт', mood: 6, stress: 5 },
-    { day: 'Ср', mood: 8, stress: 3 },
-    { day: 'Чт', mood: 5, stress: 7 },
-    { day: 'Пт', mood: 9, stress: 2 },
-    { day: 'Сб', mood: 8, stress: 3 },
-    { day: 'Вс', mood: 9, stress: 2 },
-  ];
+type StatisticsProps = {
+  userEmail: string;
+};
 
-  const monthEmotions = [
-    { emotion: 'Радость', count: 12, color: 'bg-yellow-500' },
-    { emotion: 'Спокойствие', count: 18, color: 'bg-blue-500' },
-    { emotion: 'Грусть', count: 5, color: 'bg-indigo-500' },
-    { emotion: 'Тревога', count: 8, color: 'bg-orange-500' },
-    { emotion: 'Злость', count: 3, color: 'bg-red-500' },
-    { emotion: 'Усталость', count: 10, color: 'bg-purple-500' },
-  ];
+type Entry = {
+  id: string;
+  date: string;
+  emotion: string;
+  stress: number;
+  note: string;
+  trigger: string;
+};
 
-  const maxEmotionCount = Math.max(...monthEmotions.map((e) => e.count));
+const Statistics = ({ userEmail }: StatisticsProps) => {
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [testCount, setTestCount] = useState(0);
+
+  useEffect(() => {
+    const savedEntries = localStorage.getItem(`mindcare_entries_${userEmail}`);
+    if (savedEntries) {
+      setEntries(JSON.parse(savedEntries));
+    }
+
+    const savedTests = localStorage.getItem(`mindcare_tests_${userEmail}`);
+    if (savedTests) {
+      setTestCount(JSON.parse(savedTests).length);
+    }
+  }, [userEmail]);
+
+  const calculateWeekData = () => {
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+
+    const weekEntries = entries.filter((entry) => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= weekAgo;
+    });
+
+    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const weekData = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dayEntries = weekEntries.filter(
+        (e) => new Date(e.date).toDateString() === date.toDateString()
+      );
+
+      const avgMood = dayEntries.length
+        ? Math.round(dayEntries.reduce((sum, e) => sum + (10 - e.stress), 0) / dayEntries.length)
+        : 5;
+      const avgStress = dayEntries.length
+        ? Math.round(dayEntries.reduce((sum, e) => sum + e.stress, 0) / dayEntries.length)
+        : 5;
+
+      weekData.push({
+        day: days[date.getDay()],
+        mood: avgMood,
+        stress: avgStress,
+      });
+    }
+
+    return weekData;
+  };
+
+  const calculateEmotionCounts = () => {
+    const emotionMap: Record<string, number> = {};
+    entries.forEach((entry) => {
+      emotionMap[entry.emotion] = (emotionMap[entry.emotion] || 0) + 1;
+    });
+
+    const emotionColors: Record<string, string> = {
+      'Радость': 'bg-yellow-500',
+      'Спокойствие': 'bg-blue-500',
+      'Грусть': 'bg-indigo-500',
+      'Тревога': 'bg-orange-500',
+      'Злость': 'bg-red-500',
+      'Усталость': 'bg-purple-500',
+    };
+
+    return Object.entries(emotionMap).map(([emotion, count]) => ({
+      emotion,
+      count,
+      color: emotionColors[emotion] || 'bg-gray-500',
+    }));
+  };
+
+  const weekData = calculateWeekData();
+  const monthEmotions = calculateEmotionCounts();
+  const maxEmotionCount = Math.max(...monthEmotions.map((e) => e.count), 1);
+
+  const avgMood = entries.length
+    ? (entries.reduce((sum, e) => sum + (10 - e.stress), 0) / entries.length).toFixed(1)
+    : '0';
+  const avgStress = entries.length
+    ? (entries.reduce((sum, e) => sum + e.stress, 0) / entries.length).toFixed(1)
+    : '0';
+
+  const calculateStreak = () => {
+    if (entries.length === 0) return 0;
+    
+    const sortedEntries = [...entries].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < sortedEntries.length; i++) {
+      const entryDate = new Date(sortedEntries[i].date);
+      entryDate.setHours(0, 0, 0, 0);
+      
+      const expectedDate = new Date(today);
+      expectedDate.setDate(today.getDate() - i);
+      expectedDate.setHours(0, 0, 0, 0);
+      
+      if (entryDate.getTime() === expectedDate.getTime()) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
 
   const insights = [
     {
@@ -180,19 +288,19 @@ const Statistics = () => {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-xl bg-primary/10 text-center">
-                  <div className="text-3xl font-bold text-primary mb-1">56</div>
+                  <div className="text-3xl font-bold text-primary mb-1">{entries.length}</div>
                   <div className="text-sm text-muted-foreground">Записей</div>
                 </div>
                 <div className="p-4 rounded-xl bg-green-100 text-center">
-                  <div className="text-3xl font-bold text-green-600 mb-1">7.2</div>
+                  <div className="text-3xl font-bold text-green-600 mb-1">{avgMood}</div>
                   <div className="text-sm text-muted-foreground">Ср. настроение</div>
                 </div>
                 <div className="p-4 rounded-xl bg-orange-100 text-center">
-                  <div className="text-3xl font-bold text-orange-600 mb-1">4.1</div>
+                  <div className="text-3xl font-bold text-orange-600 mb-1">{avgStress}</div>
                   <div className="text-sm text-muted-foreground">Ср. стресс</div>
                 </div>
                 <div className="p-4 rounded-xl bg-purple-100 text-center">
-                  <div className="text-3xl font-bold text-purple-600 mb-1">3</div>
+                  <div className="text-3xl font-bold text-purple-600 mb-1">{testCount}</div>
                   <div className="text-sm text-muted-foreground">Тестов пройдено</div>
                 </div>
               </div>
