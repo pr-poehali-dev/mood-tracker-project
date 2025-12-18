@@ -19,7 +19,7 @@ const Index = () => {
             <div className="w-14 h-14 bg-primary/10 rounded-3xl flex items-center justify-center">
               <Icon name="Sparkles" size={28} className="text-primary" />
             </div>
-            <h1 className="text-4xl font-bold text-foreground">MindCare</h1>
+            <h1 className="text-4xl font-bold text-foreground text-center">Дневник настроения</h1>
           </div>
           <p className="text-muted-foreground text-lg">
             Ваше пространство для заботы о ментальном здоровье
