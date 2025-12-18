@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
@@ -412,18 +413,24 @@ const Tests = ({ userEmail }: TestsProps) => {
             {selectedTest.questions[currentQuestion].text}
           </h3>
 
-          <div className="space-y-3">
-            {selectedTest.questions[currentQuestion].options.map((option, idx) => (
-              <Button
-                key={idx}
-                variant="outline"
-                className="w-full p-4 h-auto text-left justify-start border-2 hover:border-primary transition-colors"
-                onClick={() => handleAnswer(option.value)}
-              >
-                <span className="text-base">{option.text}</span>
-              </Button>
-            ))}
-          </div>
+          <RadioGroup onValueChange={(value) => handleAnswer(Number(value))}>
+            <div className="space-y-3">
+              {selectedTest.questions[currentQuestion].options.map((option, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center space-x-3 p-4 rounded-xl border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                >
+                  <RadioGroupItem value={option.value.toString()} id={`option-${idx}`} />
+                  <Label
+                    htmlFor={`option-${idx}`}
+                    className="flex-1 cursor-pointer text-base"
+                  >
+                    {option.text}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </RadioGroup>
         </div>
       </CardContent>
     </Card>
