@@ -57,7 +57,7 @@ const Index = () => {
                 <Icon name="Sparkles" size={28} className="text-primary" />
               </div>
               <div className="text-left">
-                <h1 className="text-3xl font-bold text-foreground">MindCare</h1>
+                <h1 className="text-3xl font-bold text-foreground">Дневник настроения</h1>
                 <p className="text-sm text-muted-foreground">Привет, {user.name}!</p>
               </div>
             </div>
