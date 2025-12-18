@@ -39,7 +39,7 @@ const Auth = ({ onLogin }: AuthProps) => {
           <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
             <Icon name="Sparkles" size={32} className="text-primary" />
           </div>
-          <CardTitle className="text-3xl">MindCare</CardTitle>
+          <CardTitle className="text-3xl">Дневник настроения</CardTitle>
           <CardDescription className="text-base">
             {isRegistering 
               ? 'Создайте профиль для сохранения ваших данных' 
