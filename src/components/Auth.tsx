@@ -7,18 +7,19 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
 type AuthProps = {
-  onLogin: (name: string, email: string) => void;
+  onLogin: (name: string, email: string, password: string) => void;
 };
 
 const Auth = ({ onLogin }: AuthProps) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim()) {
       toast.error('Заполните все поля');
       return;
     }
@@ -28,8 +29,37 @@ const Auth = ({ onLogin }: AuthProps) => {
       return;
     }
 
-    onLogin(name, email);
-    toast.success(isRegistering ? 'Профиль создан!' : 'Добро пожаловать!');
+    if (password.length < 6) {
+      toast.error('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    if (isRegistering) {
+      const existingUsers = JSON.parse(localStorage.getItem('mindcare_users') || '[]');
+      const userExists = existingUsers.find((u: any) => u.email === email);
+      
+      if (userExists) {
+        toast.error('Пользователь с таким email уже существует');
+        return;
+      }
+      
+      const newUser = { name, email, password };
+      existingUsers.push(newUser);
+      localStorage.setItem('mindcare_users', JSON.stringify(existingUsers));
+      onLogin(name, email, password);
+      toast.success('Профиль создан!');
+    } else {
+      const existingUsers = JSON.parse(localStorage.getItem('mindcare_users') || '[]');
+      const user = existingUsers.find((u: any) => u.email === email && u.password === password);
+      
+      if (!user) {
+        toast.error('Неверный email или пароль');
+        return;
+      }
+      
+      onLogin(user.name, user.email, user.password);
+      toast.success('Добро пожаловать!');
+    }
   };
 
   return (
@@ -68,6 +98,19 @@ const Auth = ({ onLogin }: AuthProps) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Пароль</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Минимум 6 символов"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
               />
             </div>
 

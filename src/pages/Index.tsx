@@ -6,7 +6,7 @@ import Auth from '@/components/Auth';
 import MoodDiary from '@/components/MoodDiary';
 import Tests from '@/components/Tests';
 import Techniques from '@/components/Techniques';
-import Statistics from '@/components/Statistics';
+import History from '@/components/History';
 import Favorites from '@/components/Favorites';
 import Profile from '@/components/Profile';
 import EmergencyHelp from '@/components/EmergencyHelp';
@@ -14,6 +14,7 @@ import EmergencyHelp from '@/components/EmergencyHelp';
 type UserProfile = {
   name: string;
   email: string;
+  password: string;
   createdAt: string;
 };
 
@@ -28,10 +29,11 @@ const Index = () => {
     }
   }, []);
 
-  const handleLogin = (name: string, email: string) => {
+  const handleLogin = (name: string, email: string, password: string) => {
     const newUser: UserProfile = {
       name,
       email,
+      password,
       createdAt: new Date().toISOString(),
     };
     localStorage.setItem('mindcare_user', JSON.stringify(newUser));
@@ -72,13 +74,20 @@ const Index = () => {
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-2 bg-card/50 backdrop-blur-sm p-2 rounded-2xl shadow-lg h-auto">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-5 gap-2 bg-card/50 backdrop-blur-sm p-2 rounded-2xl shadow-lg h-auto">
             <TabsTrigger 
               value="diary" 
               className="flex flex-col gap-1 py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl transition-all"
             >
               <Icon name="BookOpen" size={20} />
               <span className="text-xs font-medium">Дневник</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history"
+              className="flex flex-col gap-1 py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl transition-all"
+            >
+              <Icon name="Clock" size={20} />
+              <span className="text-xs font-medium">История</span>
             </TabsTrigger>
             <TabsTrigger 
               value="tests"
@@ -93,13 +102,6 @@ const Index = () => {
             >
               <Icon name="Heart" size={20} />
               <span className="text-xs font-medium">Техники</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="statistics"
-              className="flex flex-col gap-1 py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl transition-all"
-            >
-              <Icon name="BarChart3" size={20} />
-              <span className="text-xs font-medium">Статистика</span>
             </TabsTrigger>
             <TabsTrigger 
               value="favorites"
@@ -122,6 +124,11 @@ const Index = () => {
             <EmergencyHelp />
           </TabsContent>
 
+          <TabsContent value="history" className="animate-fade-in space-y-6">
+            <History userEmail={user.email} />
+            <EmergencyHelp />
+          </TabsContent>
+
           <TabsContent value="tests" className="animate-fade-in space-y-6">
             <Tests userEmail={user.email} />
             <EmergencyHelp />
@@ -129,11 +136,6 @@ const Index = () => {
 
           <TabsContent value="techniques" className="animate-fade-in space-y-6">
             <Techniques />
-            <EmergencyHelp />
-          </TabsContent>
-
-          <TabsContent value="statistics" className="animate-fade-in space-y-6">
-            <Statistics userEmail={user.email} />
             <EmergencyHelp />
           </TabsContent>
 
