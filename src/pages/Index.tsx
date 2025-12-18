@@ -68,9 +68,7 @@ const Index = () => {
               Выйти
             </Button>
           </div>
-          <p className="text-muted-foreground text-lg">
-            Ваше пространство для заботы о ментальном здоровье
-          </p>
+          <p className="text-muted-foreground text-lg">Позаботься о своем ментальном здоровье</p>
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
